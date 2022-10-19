@@ -2,11 +2,12 @@ package com.example.fcm_push
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 
@@ -41,18 +42,64 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     /* 메세지 수신 메서드 */
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        var noti_title = remoteMessage.notification!!.title.toString()
-        var noti_body = remoteMessage.notification!!.body.toString()
+
+
+        Log.d(
+            "Dotton95",
+            "remoteMessage.data : ${remoteMessage.data}"
+        )
+        Log.d(
+            "Dotton95",
+            "remoteMessage.notification : ${remoteMessage.notification}"
+        )
+
+//        var noti_title = remoteMessage.notification!!.title.toString()
+//        var noti_body = remoteMessage.notification!!.body.toString()
 
         var data_title = remoteMessage.data["title"].toString()
         var data_body = remoteMessage.data["body"].toString()
+        var data_image = remoteMessage.data["image"].toString()
 
+        val intent = Intent(this,MainActivity::class.java)
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+
+        var pendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            PendingIntent.getActivity(
+                this,
+               0,
+               intent,
+                PendingIntent.FLAG_MUTABLE
+            )
+        } else {
+            PendingIntent.getActivity(
+                this,
+                0,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT
+            )
+        }
+
+        /**(주의 : 모든 메시지는 수신된 지 20초 이내에 처리되어야 함)
+         * notification - 앱이 백그라운드에 있을시 알림이 작업표시줄에 뜨기만 할뿐임
+         * data - 앱이 포그라운드든 백그라운드든 일단 onMessageReceived로 들어감
+         * */
         /* 알림 빌더 */
         val notificationBuilder = NotificationCompat.Builder(this,CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)//아이콘
-            .setContentTitle(noti_title)
-            .setContentText(noti_body)
+            .setContentTitle(data_title)
+            .setContentText(data_body)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setContentIntent(pendingIntent)
             .setAutoCancel(true) //클릭 시 자동으로 삭제되도록 설정
+
+        if( data_image != null ){
+            Log.d("Dotton95","image is not null")
+        }else{
+            Log.d("Dotton95", "image is null")
+        }
+
+
+
 
         //Oreo(26) 이상 버전에는 channel 필요
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
